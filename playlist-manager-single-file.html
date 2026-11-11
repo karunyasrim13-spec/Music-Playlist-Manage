@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Music Playlist Manager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&display=swap">
+<style>
+:root{--bg:#f4f4ef;--surface:#fff;--ink:#2b2b27;--muted:#6b6b60;--line:#d6d6cc;--olive:#6b6a55;--olive-d:#4a4a41;--vinyl:#d4572f;--on-vinyl:#fff;--tint:#e6e6df;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1c1c19;--surface:#262622;--ink:#ecece4;--muted:#a3a396;--line:#3d3d36;--olive:#9a9a82;--olive-d:#c9c9b4;--tint:#2f2f2a;color-scheme:dark}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 18px 48px}
+h1{font-weight:300;font-size:2rem;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 22px}
+.now{display:flex;align-items:center;gap:14px;background:var(--olive-d);color:#f4f4ef;border-radius:14px;padding:14px 18px;margin-bottom:18px}
+.disc{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle,var(--vinyl) 0 28%,#111 29%);flex:none}
+.disc.spin{animation:s 3s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.disc.spin{animation:none}}
+.now small{opacity:.7;display:block;font-size:.8rem}
+.now b{font-weight:600;font-size:1.15rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+h2{font-weight:400;font-size:1.05rem;margin:0 0 10px}
+.chain{display:flex;align-items:flex-start;overflow-x:auto;padding:6px 2px 10px}
+.item{display:flex;align-items:center;flex:none}
+.node{min-width:108px;text-align:center;border:1.5px solid var(--olive);border-radius:10px;padding:10px 8px;background:var(--surface);transition:background .2s,border-color .2s}
+.node.cur{background:var(--vinyl);border-color:var(--vinyl);color:var(--on-vinyl)}
+.node .n{font-weight:600;word-break:break-word}
+.node .p{font-size:.72rem;opacity:.75;margin-top:4px}
+.arrow{color:var(--olive);padding:0 6px;font-size:1.2rem}
+.tags{font-size:.75rem;color:var(--muted);text-align:center;margin-top:6px;min-height:1.2em}
+.tags span{background:var(--tint);border-radius:6px;padding:1px 6px;margin:0 2px}
+.null{color:var(--muted);font-size:.75rem;padding:0 6px}
+.empty{color:var(--muted);padding:14px 4px}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+input{flex:1 1 200px;min-width:0;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+button{font:inherit;padding:10px 14px;border-radius:8px;border:1px solid var(--olive);background:var(--surface);color:var(--ink);cursor:pointer;min-height:44px}
+button.pri{background:var(--olive-d);color:#f4f4ef;border-color:var(--olive-d)}
+button.del{border-color:var(--vinyl);color:var(--vinyl)}
+button:hover{filter:brightness(.95)}
+:focus-visible{outline:2px solid var(--vinyl);outline-offset:2px}
+.nav{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#log{list-style:none;margin:0;padding:0;max-height:220px;overflow:auto;font-size:.9rem}
+#log li{padding:6px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px}
+#log li:first-child{border-top:0}
+#log em{font-style:normal;color:var(--muted);white-space:nowrap}
+.list{margin:0;padding-left:1.2em}
+.msg{color:var(--vinyl);min-height:1.4em;margin:8px 0 0;font-size:.9rem}
+</style>
+</head>
+<body>
+<main>
+<h1>Music Playlist Manager</h1>
+<p class="sub">A doubly linked list in action: every song is a node with prev and next pointers.</p>
+
+<div class="now"><div class="disc" id="disc"></div><div><small>Now playing</small><b id="nowName">Nothing yet</b></div></div>
+
+<div class="card">
+<h2>Playlist (HEAD to TAIL)</h2>
+<div class="chain" id="chain" aria-live="polite"></div>
+</div>
+
+<div class="card">
+<h2>Add or delete a song</h2>
+<div class="row">
+<input id="song" placeholder="Song name" maxlength="30" aria-label="Song name">
+</div>
+<div class="row" style="margin-top:8px">
+<button class="pri" id="addTail">Add at tail</button>
+<button id="addHead">Add at head</button>
+<button class="del" id="delName">Delete this name</button>
+<button class="del" id="delCur">Delete current</button>
+</div>
+<p class="msg" id="msg"></p>
+</div>
+
+<div class="card">
+<h2>Navigate</h2>
+<div class="nav">
+<button id="prev">Play previous</button>
+<button class="pri" id="next">Play next</button>
+</div>
+<div class="row" style="margin-top:8px"><button id="show">Display all songs</button><button id="demo">Load sample songs</button></div>
+<ol class="list" id="display"></ol>
+</div>
+
+<div class="card">
+<h2>Operation log</h2>
+<ul id="log"><li><span>Playlist created (empty list)</span><em>HEAD = TAIL = NULL</em></li></ul>
+</div>
+</main>
+<script>
+class Node{constructor(name){this.name=name;this.prev=null;this.next=null}}
+class Playlist{
+constructor(){this.head=null;this.tail=null;this.current=null;this.size=0}
+addTail(name){const n=new Node(name);if(!this.tail){this.head=this.tail=this.current=n}else{n.prev=this.tail;this.tail.next=n;this.tail=n}this.size++}
+addHead(name){const n=new Node(name);if(!this.head){this.head=this.tail=this.current=n}else{n.next=this.head;this.head.prev=n;this.head=n}this.size++}
+find(name){let t=this.head,steps=0;const k=name.toLowerCase();while(t){steps++;if(t.name.toLowerCase()===k)return{node:t,steps};t=t.next}return{node:null,steps}}
+remove(n){
+if(n.prev)n.prev.next=n.next;else this.head=n.next;
+if(n.next)n.next.prev=n.prev;else this.tail=n.prev;
+if(this.current===n)this.current=n.next||n.prev;
+this.size--}
+toArray(){const a=[];let t=this.head;while(t){a.push(t);t=t.next}return a}
+}
+const pl=new Playlist();
+const $=id=>document.getElementById(id);
+const msg=t=>{$('msg').textContent=t};
+function log(text,cost){const li=document.createElement('li');li.innerHTML='<span></span><em></em>';li.children[0].textContent=text;li.children[1].textContent=cost;$('log').prepend(li)}
+function render(){
+const c=$('chain');c.textContent='';
+const arr=pl.toArray();
+if(!arr.length){c.innerHTML='<div class="empty">The playlist is empty. Add a song to create the first node.</div>'}
+else{
+const first=document.createElement('div');first.className='null';first.textContent='NULL ⇠';first.style.alignSelf='flex-start';first.style.paddingTop='22px';c.appendChild(first);
+arr.forEach((n,i)=>{
+const wrap=document.createElement('div');
+const item=document.createElement('div');item.className='item';
+const nd=document.createElement('div');nd.className='node'+(n===pl.current?' cur':'');
+nd.innerHTML='<div class="n"></div><div class="p"></div>';
+nd.children[0].textContent=n.name;
+nd.children[1].textContent='prev: '+(n.prev?n.prev.name:'NULL')+' | next: '+(n.next?n.next.name:'NULL');
+item.appendChild(nd);
+if(i<arr.length-1){const a=document.createElement('div');a.className='arrow';a.textContent='⇄';item.appendChild(a)}
+wrap.appendChild(item);
+const tg=document.createElement('div');tg.className='tags';
+let h='';if(n===pl.head)h+='<span>HEAD</span>';if(n===pl.current)h+='<span>CURRENT</span>';if(n===pl.tail)h+='<span>TAIL</span>';
+tg.innerHTML=h;wrap.appendChild(tg);c.appendChild(wrap)});
+const last=document.createElement('div');last.className='null';last.textContent='⇢ NULL';last.style.paddingTop='22px';c.appendChild(last)}
+$('nowName').textContent=pl.current?pl.current.name:'Nothing yet';
+$('disc').classList.toggle('spin',!!pl.current);
+$('prev').disabled=!(pl.current&&pl.current.prev);
+$('next').disabled=!(pl.current&&pl.current.next);
+$('delCur').disabled=!pl.current;
+$('display').textContent='';
+}
+function getName(){const v=$('song').value.trim();if(!v){msg('Type a song name first.');return null}return v}
+$('addTail').onclick=()=>{const v=getName();if(!v)return;pl.addTail(v);$('song').value='';msg('');log('Added “'+v+'” at tail','O(1)');render()};
+$('addHead').onclick=()=>{const v=getName();if(!v)return;pl.addHead(v);$('song').value='';msg('');log('Added “'+v+'” at head','O(1)');render()};
+$('delName').onclick=()=>{const v=getName();if(!v)return;const r=pl.find(v);
+if(!r.node){msg('“'+v+'” is not in the playlist.');return}
+pl.remove(r.node);$('song').value='';msg('');log('Deleted “'+r.node.name+'” (searched '+r.steps+' nodes, then relinked neighbors)','O(n)');render()};
+$('delCur').onclick=()=>{if(!pl.current)return;const n=pl.current;pl.remove(n);msg('');log('Deleted current song “'+n.name+'” (pointer update only)','O(1)');render()};
+$('next').onclick=()=>{if(pl.current&&pl.current.next){pl.current=pl.current.next;log('Play next: current = “'+pl.current.name+'”','O(1)');render()}};
+$('prev').onclick=()=>{if(pl.current&&pl.current.prev){pl.current=pl.current.prev;log('Play previous: current = “'+pl.current.name+'”','O(1)');render()}};
+$('show').onclick=()=>{const ol=$('display');ol.textContent='';const a=pl.toArray();
+if(!a.length){ol.innerHTML='<li class="empty" style="list-style:none">Nothing to display.</li>';return}
+a.forEach(n=>{const li=document.createElement('li');li.textContent=n.name+(n===pl.current?' (playing)':'');ol.appendChild(li)});
+log('Displayed '+a.length+' songs from HEAD to TAIL','O(n)')};
+$('demo').onclick=()=>{['Kanavu Kaanum','Vaathi Coming','Munbe Vaa','Ennavale'].forEach(s=>pl.addTail(s));log('Loaded 4 sample songs at tail','O(1) each');render()};
+$('song').addEventListener('keydown',e=>{if(e.key==='Enter')$('addTail').click()});
+render();
+</script>
+</body>
+</html>

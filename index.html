@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Music Playlist Manager</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<h1>Music Playlist Manager</h1>
+<p class="sub">A doubly linked list in action: every song is a node with prev and next pointers.</p>
+
+<div class="now"><div class="disc" id="disc"></div><div><small>Now playing</small><b id="nowName">Nothing yet</b></div></div>
+
+<div class="card">
+<h2>Playlist (HEAD to TAIL)</h2>
+<div class="chain" id="chain" aria-live="polite"></div>
+</div>
+
+<div class="card">
+<h2>Add or delete a song</h2>
+<div class="row">
+<input id="song" placeholder="Song name" maxlength="30" aria-label="Song name">
+</div>
+<div class="row" style="margin-top:8px">
+<button class="pri" id="addTail">Add at tail</button>
+<button id="addHead">Add at head</button>
+<button class="del" id="delName">Delete this name</button>
+<button class="del" id="delCur">Delete current</button>
+</div>
+<p class="msg" id="msg"></p>
+</div>
+
+<div class="card">
+<h2>Navigate</h2>
+<div class="nav">
+<button id="prev">Play previous</button>
+<button class="pri" id="next">Play next</button>
+</div>
+<div class="row" style="margin-top:8px"><button id="show">Display all songs</button><button id="demo">Load sample songs</button></div>
+<ol class="list" id="display"></ol>
+</div>
+
+<div class="card">
+<h2>Operation log</h2>
+<ul id="log"><li><span>Playlist created (empty list)</span><em>HEAD = TAIL = NULL</em></li></ul>
+</div>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
